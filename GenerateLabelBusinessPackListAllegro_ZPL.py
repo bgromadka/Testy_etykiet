@@ -20,7 +20,7 @@ HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
 
 # Mapowanie partnerów na nazwy plików
 PARTNER_FILE_NAMES = {
-    "PWRTR50301": "GenerateLabelBusinessPackListAllegro__standard__ZPL.zpl",
+    "PWRTR50301": "GenerateLabelBusinessPackListAllegro__allegro__ZPL.zpl",
 }
 
 
@@ -240,7 +240,7 @@ def decode_and_save_zpl(base64_data, method_folder_name, output_filename, url_na
 if __name__ == "__main__":
 
     # Nazwa folderu metody (np. nazwa skryptu lub funkcji)
-    method_folder_name = "GenerateBusinessPackListAllegro_ZPL"
+    method_folder_name = "GenerateLabelBusinessPackListAllegro_ZPL"
 
     # Lista partnerów (PartnerID, PartnerKey)
     partners = [

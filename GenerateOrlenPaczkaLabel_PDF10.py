@@ -5,112 +5,113 @@ import xml.etree.ElementTree as ET
 import webbrowser
 import datetime
 
+from common_data import URL_DICT, OUTPUT_FOLDER
+
 # Konfiguracja
-SOAP_URL = "https://api-test.orlenpaczka.pl/WebServicePwR/WebServicePwR.asmx"
 HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
+
+
+PARTNER_FILE_NAMES = {
+    "PWR0000006": "GenerateOrlenPaczkaLabel__allegro__PDF10.pdf",
+    "TEST000859": "GenerateOrlenPaczkaLabel__Meest__PDF10.pdf",
+    "TEST003483": "GenerateOrlenPaczkaLabel__Vinted__PDF10.pdf",
+    "TEST000129": "GenerateOrlenPaczkaLabel__Packeta__PDF10.pdf",
+    "TEST000015": "GenerateOrlenPaczkaLabel__standard__PDF10.pdf",
+}
 
 # Funkcja generująca XML dla danego PartnerID i PartnerKey
 def generate_soap_body(partner_id, partner_key):
     return f"""<?xml version="1.0" encoding="utf-8"?>
-<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+               xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+               xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
    <soap:Body>
-        <GenerateLabelBusinessPackListAllegro xmlns="https://91.242.220.103/WebServicePwR">
-      <PartnerID>{partner_id}</PartnerID>
+    <GenerateOrlenPaczkaLabel xmlns="https://91.242.220.103/WebServicePwR">
+----------------------------------------------------------Generowanie listu przewozowego z etykieta
+       <PartnerID>{partner_id}</PartnerID>
       <PartnerKey>{partner_key}</PartnerKey>
-       <AutoDestinationChange>T</AutoDestinationChange>
-      ----------------------------------------------------------Punkt odbioru
-      <BusinessPackList>
-        <BusinessPackAllegro>
-            <DestinationCode>WS-100001</DestinationCode>
-            <AlternativeDestinationCode>100001</AlternativeDestinationCode>
 
 
-      ----------------------------------------------------------Punkt odbioru
-----------------------------------------------------------format wydruku
-      <Format>PDF10</Format>
-
-----------------------------------------------------------format wydruku
+      <Format>PDF10</Format> -----------PDF, PDF10, ZPL
 ----------------------------------------------------------rozmiar paczki- gabaryt
-            <BoxSize>L</BoxSize>
+<BoxSize>L</BoxSize>
 ----------------------------------------------------------rozmiar paczki- gabaryt
+      ----------------------------------------------------------Punkt odbioru
+      <Psd>100001</Psd>
+      <AlternativeDestinationCode></AlternativeDestinationCode>
+      ----------------------------------------------------------Punkt odbioru
 ----------------------------------------------------------pole referencji widoczne na etykiecie
-            <SenderOrders>referencja</SenderOrders>
+<SenderOrders>referencja-/</SenderOrders>
 ----------------------------------------------------------pole referencji widoczne na etykiecie
-----------------------------------------------------------dodatkowe serwisy
-            <Insurance></Insurance>--T-F
-            <PackValue></PackValue>--kwota
-            <CashOnDelivery></CashOnDelivery>--T-F
-            <AmountCashOnDelivery></AmountCashOnDelivery>--kwota
-            <TransferDescription>opis transakcji</TransferDescription>
-----------------------------------------------------------dodatkowe serwisy
-----------------------------------------------------------Odbiorca
-            <EMail>f8evljcyjw+7a6e0eca8@user.allegrogroup.pl</EMail>
-            <FirstName>odbiorcaimie</FirstName>
-            <LastName>odbiorcanazwisko</LastName>
-            <PhoneNumber>885779607</PhoneNumber>
-            <CompanyName>firmaodbiorca</CompanyName>
-            <StreetName>ulicaodbiorca</StreetName>
-            <BuildingNumber>1</BuildingNumber>
-            <FlatNumber>1</FlatNumber>
-            <City>miastoodbiorca</City>
-            <PostCode>99-999</PostCode>
-----------------------------------------------------------Odbiorca
 ----------------------------------------------------------Nadawca
-            <SenderEMail>test@nadawca.pl</SenderEMail>
-            <SenderCompanyName>Firmanadawca</SenderCompanyName>
-            <SenderFirstName>imienadawca</SenderFirstName>
-            <SenderLastName>nazwiskonadawca</SenderLastName>
-            <SenderStreetName>ulicanadawca</SenderStreetName>
-            <SenderFlatNumber>1</SenderFlatNumber>
-            <SenderBuildingNumber>2</SenderBuildingNumber>
-            <SenderCity>Warszawa</SenderCity>
-            <SenderPostCode>99-999</SenderPostCode>
-            <SenderPhoneNumber>885779607</SenderPhoneNumber>
-            <PrintAdress>1</PrintAdress>-------wybór adresu do wydruku przy zwrocie  1- adres odbiorcy, 2 - adres zwrotu
-            <PrintType>1</PrintType>
+<SenderEMail>tmsec1p9ju+4f9d21f12@user.allegrogroup.pl</SenderEMail>
+<SenderCompanyName>Firmanadawca</SenderCompanyName>
+<SenderFirstName>imienadawca</SenderFirstName>
+<SenderLastName>nazwiskonadawca</SenderLastName>
+<SenderStreetName>ulicanadawca</SenderStreetName>
+<SenderFlatNumber>1</SenderFlatNumber>
+<SenderBuildingNumber>2</SenderBuildingNumber>
+<SenderCity>Warszawa</SenderCity>
+<SenderPostCode>99-999</SenderPostCode>
+<SenderPhoneNumber>885779607</SenderPhoneNumber>
+<PrintType>1</PrintType>
+<ExternalPackageNumber>AD14412341</ExternalPackageNumber>
 ----------------------------------------------------------Nadawca
-----------------------------------------------------------dane dla zwrotu
-            <ReturnDestinationCode></ReturnDestinationCode>
-            <ReturnEMail></ReturnEMail>
-            <ReturnFirstName></ReturnFirstName>
-            <ReturnLastName></ReturnLastName>
-            <ReturnCompanyName></ReturnCompanyName>
-            <ReturnStreetName></ReturnStreetName>
-            <ReturnBuildingNumber></ReturnBuildingNumber>
-            <ReturnFlatNumber></ReturnFlatNumber>
-            <ReturnCity></ReturnCity>
-            <ReturnPostCode></ReturnPostCode>
-            <ReturnPhoneNumber></ReturnPhoneNumber>
-            <ReturnPack>F</ReturnPack>-------zwrot czy nie T/N
-----------------------------------------------------------dane dla zwrotu
-----------------------------------------------------------marketning
-            <ConfirmTermsOfUse></ConfirmTermsOfUse>
-            <ConfirmMarketing></ConfirmMarketing>
-            <CofirmMailing></CofirmMailing>
-----------------------------------------------------------marketning
-----------------------------------------------------------allegro
-            <AllegroId></AllegroId>
-            <AllegroOrderId></AllegroOrderId>
-            <AllegroCustomerLogin></AllegroCustomerLogin>
-            <AllegroTransactionId></AllegroTransactionId>
-            <AllegroSellerId></AllegroSellerId>
-            <AllegroDeliveryType></AllegroDeliveryType>
-            <AllegroPaymentType></AllegroPaymentType>
-            <AllegroDealId></AllegroDealId>
-      ----------------------------------------------------------allegro
-        </BusinessPackAllegro>
 
-      </BusinessPackList>
-    </GenerateLabelBusinessPackListAllegro>
-</soap:Body>
+
+----------------------------------------------------------dodatkowe serwisy
+      <Insurance></Insurance>--T-F
+      <PackValue></PackValue>--kwota
+
+      <CashOnDelivery></CashOnDelivery>--T-F
+      <AmountCashOnDelivery></AmountCashOnDelivery>--kwota
+	        <TransferDescription>opis transakcji</TransferDescription>
+
+                  <Serwis>Serwis</Serwis>
+      <ItemsInPackage>3</ItemsInPackage>
+----------------------------------------------------------dodatkowe serwisy
+
+
+
+----------------------------------------------------------Odbiorca
+      <EMail>f8evljcyjw+7a6e0eca8@user.allegrogroup.pl</EMail>
+      <FirstName>odbiorcaimie</FirstName>
+      <LastName>odbiorcanazwisko</LastName>
+      <PhoneNumber>885779607</PhoneNumber>
+      <CompanyName>firmaodbiorca</CompanyName>
+      <StreetName>ulicaodbiorca</StreetName>
+      <BuildingNumber>1</BuildingNumber>
+      <FlatNumber>1</FlatNumber>
+      <City>miastoodbiorca</City>
+      <PostCode>99-999</PostCode>
+----------------------------------------------------------Odbiorca
+
+----------------------------------------------------------------------zwrot
+<ReturnPsd></ReturnPsd>
+      <ReturnEMail></ReturnEMail>
+      <ReturnFirstName></ReturnFirstName>
+      <ReturnLastName></ReturnLastName>
+      <ReturnCompanyName></ReturnCompanyName>
+      <ReturnStreetName></ReturnStreetName>
+      <ReturnBuildingNumber></ReturnBuildingNumber>
+      <ReturnFlatNumber></ReturnFlatNumber>
+      <ReturnCity></ReturnCity>
+      <ReturnPostCode></ReturnPostCode>
+      <ReturnPhoneNumber></ReturnPhoneNumber>
+      <ReturnPack></ReturnPack>-------zwrot czy nie T/N
+      <PrintAdress>1</PrintAdress>-------wyełnij do druku 1- adres odbiorcy, 2 - adres zwrotu
+----------------------------------------------------------------------zwrot
+    </GenerateOrlenPaczkaLabel>
+  </soap:Body>
+
 </soap:Envelope>"""
 
 # Funkcja wysyłająca zapytanie SOAP i pobierająca etykietę
-def get_label(partner_id, partner_key):
+def get_label(partner_id, partner_key, url):
     """Wysyła zapytanie SOAP i pobiera etykietę w formacie Base64."""
     soap_body = generate_soap_body(partner_id, partner_key)
 
-    response = requests.post(SOAP_URL, data=soap_body, headers=HEADERS, verify=True)
+    response = requests.post(url, data=soap_body, headers=HEADERS, verify=True)
 
     if response.status_code != 200:
         print(f"Treść odpowiedzi: {response.text}")
@@ -139,7 +140,7 @@ def get_label(partner_id, partner_key):
     return label_data.text
 
 # Funkcja dekodująca Base64 i zapisująca PDF w określonym folderze
-def decode_and_save_pdf(base64_data, main_folder, method_folder_name, output_filename):
+def decode_and_save_pdf(base64_data, main_folder, method_folder_name, output_filename, url_name):
     """Dekoduje dane Base64 i zapisuje je jako plik PDF w określonym folderze z datą i godziną w nazwie pliku."""
     try:
         # Ścieżka do folderu "wygenerowane etykiety"
@@ -161,7 +162,7 @@ def decode_and_save_pdf(base64_data, main_folder, method_folder_name, output_fil
 
         # Tworzenie nowej nazwy pliku z datą i godziną
         filename, file_extension = os.path.splitext(output_filename)
-        new_output_filename = f"{filename}_{current_time}{file_extension}"
+        new_output_filename = f"{filename}__{url_name}__{current_time}{file_extension}"
         print(f"Nowa nazwa pliku: {new_output_filename}")
 
         # Pełna ścieżka do pliku PDF
@@ -174,33 +175,33 @@ def decode_and_save_pdf(base64_data, main_folder, method_folder_name, output_fil
             print(f"Plik PDF10 zapisany: {output_path}")
 
         # Otwórz plik PDF w przeglądarce
-        webbrowser.open(f'file://{os.path.abspath(output_path)}')
-        print(f"Etykieta zapisana: {output_path} i otwarta w przeglądarce.")
+        # webbrowser.open(f'file://{os.path.abspath(output_path)}')
+        # print(f"Etykieta zapisana: {output_path} i otwarta w przeglądarce.")
     except Exception as e:
         raise Exception(f"Błąd podczas zapisywania pliku PDF: {e}")
 
 if __name__ == "__main__":
-    # Ścieżka do folderu głównego
-    main_folder = r"C:\Users\bgromadka\Desktop\generowanie etykiet- dokumentacja\Etykiety"
-
     # Nazwa folderu metody (np. nazwa skryptu lub funkcji)
-    method_folder_name = "label_GenerateLabelBusinessPackListAllegro_PDF10_PDF"
+    method_folder_name = "GenerateOrlenPaczkaLabel_PDF10F"
 
     # Lista partnerów (PartnerID, PartnerKey)
     partners = [
-        ("PWRTR50301", "PWRTR50301"),
-
+        ("PWR0000006", "1234"),
+        ("TEST000859", "SMS8IKIF3A"),
+        ("TEST003483", "F2E087C0B9"),
+        ("TEST000129", "TTFWWSCSVO"),
+        ("TEST000015", "GTTFM5HEOP")
     ]
 
     print("Pobieranie etykiet...")
 
     try:
         # Generowanie etykiety dla każdego partnera
-        for partner_id, partner_key in partners:
-            print(f"Generowanie etykiety dla partnera {partner_id}...")
-            label_base64 = get_label(partner_id, partner_key)
-            output_filename = f"label_{partner_id}.pdf"
-            decode_and_save_pdf(label_base64, main_folder, method_folder_name, output_filename)
+        for url_name, url_value in URL_DICT.items():
+            for partner_id, partner_key in partners:
+                print(f"Generowanie etykiety dla partnera {partner_id}...")
+                label_base64 = get_label(partner_id, partner_key, url_value)
+                decode_and_save_pdf(label_base64, OUTPUT_FOLDER, method_folder_name, PARTNER_FILE_NAMES[partner_id], url_name)
 
     except Exception as e:
         print(f"Wystąpił błąd: {e}")

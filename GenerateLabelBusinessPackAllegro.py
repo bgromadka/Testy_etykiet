@@ -11,7 +11,7 @@ HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
 
 # Mapowanie partnerów na nazwy plików
 PARTNER_FILE_NAMES = {
-    "PWRTR50301": "GenerateLabelBusinessPackList__allegro__PDF.pdf",
+    "PWRTR50301": "GenerateLabelBusinessPackAllegro__allegro__PDF.pdf",
 }
 
 # Funkcja generująca XML dla danego PartnerID i PartnerKey

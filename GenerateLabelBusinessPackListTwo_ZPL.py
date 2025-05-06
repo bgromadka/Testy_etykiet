@@ -21,7 +21,7 @@ HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
 # Mapowanie partnerów na nazwy plików
 PARTNER_FILE_NAMES = {
     "PWR0000006": "GenerateLabelBusinessPackListTwo__standard__PWR0000006__ZPL.zpl",
-    "TEST000859": "GenerateLabelBusinessPackListTwo__meest__TEST000859__ZPL.zpl",
+    "TEST000859": "GenerateLabelBusinessPackListTwo__Meest__TEST000859__ZPL.zpl",
     "TEST003483": "GenerateLabelBusinessPackListTwo__Vinted__TEST003483__ZPL.zpl",
 }
 

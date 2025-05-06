@@ -12,7 +12,7 @@ HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
 
 PARTNER_FILE_NAMES = {
     "PWR0000006": "GenerateLabelBusinessPackListTwo__standard__PDF10.pdf",
-    "TEST000859": "GenerateLabelBusinessPackListTwo__meest__PDF10.pdf",
+    "TEST000859": "GenerateLabelBusinessPackListTwo__Meest__PDF10.pdf",
     "TEST003483": "GenerateLabelBusinessPackListTwo__Vinted__PDF10.pdf",
 }
 

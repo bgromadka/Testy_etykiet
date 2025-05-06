@@ -13,7 +13,7 @@ HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
 # Mapowanie partnerów na nazwy plików
 PARTNER_FILE_NAMES = {
     "PWR0000006": "GenerateLabelBusinessPackList__standard__PDF.pdf",
-    "TEST000859": "GenerateLabelBusinessPackList__meest__PDF.pdf",
+    "TEST000859": "GenerateLabelBusinessPackList__Meest__PDF.pdf",
     "TEST003483": "GenerateLabelBusinessPackList__Vinted__PDF.pdf",
 }
 

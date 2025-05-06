@@ -5,13 +5,14 @@ import xml.etree.ElementTree as ET
 import webbrowser
 import datetime
 
+from common_data import URL_DICT, OUTPUT_FOLDER
+
 # Konfiguracja
-SOAP_URL = "http://bruchorpact03/WebServicePwRKube/WebServicePwR.asmx"
 HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
 
 # Mapowanie partnerów na nazwy plików
 PARTNER_FILE_NAMES = {
-    "PWRTR50301": "label_standard_GenerateLabelBusinessPackListAllegro_PDF10.pdf",
+    "PWRTR50301": "GenerateLabelBusinessPackListAllegro__allegro__PDF10.pdf",
 }
 
 # Funkcja generująca XML dla danego PartnerID i PartnerKey
@@ -111,11 +112,11 @@ def generate_soap_body(partner_id, partner_key):
 </soap:Envelope>"""
 
 # Funkcja wysyłająca zapytanie SOAP i pobierająca etykietę
-def get_label(partner_id, partner_key):
+def get_label(partner_id, partner_key, url):
     """Wysyła zapytanie SOAP i pobiera etykietę w formacie Base64."""
     soap_body = generate_soap_body(partner_id, partner_key)
 
-    response = requests.post(SOAP_URL, data=soap_body, headers=HEADERS, verify=True)
+    response = requests.post(url, data=soap_body, headers=HEADERS, verify=True)
 
     if response.status_code != 200:
         print(f"Treść odpowiedzi: {response.text}")
@@ -144,35 +145,47 @@ def get_label(partner_id, partner_key):
     return label_data.text
 
 # Funkcja dekodująca Base64 i zapisująca PDF10 w określonym folderze
-def decode_and_save_pdf10(base64_data, folder_path, output_filename):
+def decode_and_save_pdf10(base64_data, main_folder, method_folder_name, output_filename, url_name):
     """Dekoduje dane Base64 i zapisuje je jako plik PDF10 w określonym folderze z datą i godziną w nazwie pliku."""
     try:
+        # Ścieżka do folderu "wygenerowane etykiety"
+        generated_folder = os.path.join(main_folder, "wygenerowane etykiety")
+        os.makedirs(generated_folder, exist_ok=True)
+        print(f"Folder 'wygenerowane etykiety' został utworzony: {generated_folder}")
+
+        # Ścieżka do folderu metody wewnątrz "wygenerowane etykiety"
+        method_folder = os.path.join(generated_folder, method_folder_name)
+        os.makedirs(method_folder, exist_ok=True)
+        print(f"Folder metody '{method_folder_name}' został utworzony: {method_folder}")
+
         # Upewniamy się, że folder istnieje
-        os.makedirs(folder_path, exist_ok=True)
+        os.makedirs(method_folder, exist_ok=True)
+        print(f"Folder docelowy: {method_folder}")
 
         # Pobranie aktualnej daty i godziny
         current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
         # Tworzenie nowej nazwy pliku z datą i godziną
         filename, file_extension = os.path.splitext(output_filename)
-        new_output_filename = f"{filename}_{current_time}{file_extension}"
+        new_output_filename = f"{filename}__{url_name}__{current_time}{file_extension}"
 
         # Pełna ścieżka do pliku PDF10
-        output_path = os.path.join(folder_path, new_output_filename)
+        output_path = os.path.join(method_folder, new_output_filename)
+        print(f"Pełna ścieżka do pliku: {output_path}")
 
         # Dekodowanie Base64 i zapis do pliku PDF10
         with open(output_path, "wb") as pdf10_file:
             pdf10_file.write(base64.b64decode(base64_data))
 
         # Otwórz plik PDF10 w przeglądarce
-        webbrowser.open(f'file://{os.path.abspath(output_path)}')
-        print(f"Etykieta została zapisana jako PDF10 w folderze {folder_path}: {new_output_filename} i otwarta w przeglądarce.")
+        # webbrowser.open(f'file://{os.path.abspath(output_path)}')
+        # print(f"Etykieta została zapisana jako PDF10 w folderze {method_folder_name}: {new_output_filename} i otwarta w przeglądarce.")
     except Exception as e:
         print(f"Błąd podczas zapisywania pliku PDF10: {e}")
 
 if __name__ == "__main__":
     # Ścieżka do folderu, w którym będą zapisane etykiety
-    folder_name = "label_GenerateLabelBusinessPackListAllegro_PDF10"
+    folder_name = "GenerateLabelBusinessPackListAllegro_PDF10"
 
     # Lista partnerów (pary PartnerID, PartnerKey)
     partners = [
@@ -182,11 +195,11 @@ if __name__ == "__main__":
     print("Pobieranie etykiet...")
 
     try:
-        for partner_id, partner_key in partners:
-            print(f"Generowanie etykiety dla {partner_id}...")
-            label_base64 = get_label(partner_id, partner_key)
-            output_filename = PARTNER_FILE_NAMES[partner_id]  # Pobierz nazwę pliku dla danego partnera
-            decode_and_save_pdf10(label_base64, folder_name, output_filename)
+        for url_name, url_value in URL_DICT.items():
+            for partner_id, partner_key in partners:
+                print(f"Generowanie etykiety dla {partner_id}...")
+                label_base64 = get_label(partner_id, partner_key, url_value)
+                decode_and_save_pdf10(label_base64, OUTPUT_FOLDER, folder_name, PARTNER_FILE_NAMES[partner_id], url_name)
 
     except Exception as e:
         print(f"Wystąpił błąd: {e}")

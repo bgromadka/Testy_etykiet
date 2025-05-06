@@ -12,7 +12,7 @@ HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
 # Mapowanie partnerów na nazwy plików
 PARTNER_FILE_NAMES = {
     "PWR0000006": "GenerateLabelBusinessPack__standard__PDF.pdf",
-    "TEST000859": "GenerateLabelBusinessPack__meest__PDF.pdf",
+    "TEST000859": "GenerateLabelBusinessPack__Meest__PDF.pdf",
     "TEST003483": "GenerateLabelBusinessPack__Vinted__PDF.pdf",
 }
 
@@ -166,7 +166,6 @@ if __name__ == "__main__":
         ("PWR0000006", "1234"),
         ("TEST000859", "SMS8IKIF3A"),
         ("TEST003483", "F2E087C0B9"),
-
     ]
 
     try:
