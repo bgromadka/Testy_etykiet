@@ -12,20 +12,20 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 import datetime
-
+from common_data import OUTPUT_FOLDER, URL_DICT
 # Konfiguracja
-SOAP_URL = "http://bruchorpact03/WebServicePwRKube/WebServicePwR.asmx"
+
 HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
 
 # Mapowanie partnerów na nazwy plików
 PARTNER_FILE_NAMES = {
-    "PWRTR50301": "label_pokemon_GenerateOrlenPaczkaReturn2Home.epl",
-    "TEST000129": "label_Packeta_GenerateOrlenPaczkaReturn2Home.epl",
+    "PWRTR50301": "GenerateStandardCustomerReturn_Pokemon_EPL.epl",
+
 
 }
 
 # Konfiguracja
-SOAP_URL = "https://api-test.orlenpaczka.pl/WebServicePwR/WebServicePwR.asmx"
+
 HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
 
 # Funkcja generująca XML dla danego PartnerID i PartnerKey
@@ -70,7 +70,7 @@ def generate_soap_body(partner_id, partner_key):
 </soap:Envelope>"""
 
 
-def decode_and_save_EPL(base64_data, main_folder, method_folder_name, output_filename):
+def decode_and_save_EPL(base64_data, main_folder, method_folder_name, output_filename, url_name):
     """Dekoduje dane Base64 i zapisuje je jako plik EPL w określonym folderze z datą i godziną w nazwie pliku."""
     try:
         # Ścieżka do folderu "wygenerowane etykiety"
@@ -95,7 +95,7 @@ def decode_and_save_EPL(base64_data, main_folder, method_folder_name, output_fil
 
         # Tworzenie nowej nazwy pliku z datą i godziną
         filename, file_extension = os.path.splitext(output_filename)
-        new_output_filename = f"{filename}_{current_time}{file_extension}"
+        new_output_filename = f"{filename}__{url_name}__{current_time}{file_extension}"
         print(f"Nowa nazwa pliku: {new_output_filename}")
 
         # Pełna ścieżka do pliku EPL
@@ -107,21 +107,21 @@ def decode_and_save_EPL(base64_data, main_folder, method_folder_name, output_fil
             EPL_file.write(EPL_data)
 
         # Uruchomienie Notepad++ w tle
-        notepad_plus_plus_path = r"C:\Program Files\Notepad++\notepad++.exe"  # Ścieżka do Notepad++
-        if os.path.exists(notepad_plus_plus_path):
-            subprocess.Popen([notepad_plus_plus_path, output_path])
-        else:
-            print("Nie znaleziono Notepad++ w domyślnej lokalizacji. Upewnij się, że jest zainstalowany.")
+        #notepad_plus_plus_path = r"C:\Program Files\Notepad++\notepad++.exe"  # Ścieżka do Notepad++
+        #if os.path.exists(notepad_plus_plus_path):
+         #   subprocess.Popen([notepad_plus_plus_path, output_path])
+        #else:
+         #   print("Nie znaleziono Notepad++ w domyślnej lokalizacji. Upewnij się, że jest zainstalowany.")
 
-        print(f"Etykieta została zapisana jako EPL w folderze {method_folder}: {new_output_filename} i otwarta w Notepad++.")
+        #print(f"Etykieta została zapisana jako EPL w folderze {method_folder}: {new_output_filename} i otwarta w Notepad++.")
     except Exception as e:
         print(f"Błąd podczas zapisywania pliku EPL: {e}")
 
-def get_label(partner_id, partner_key):
+def get_label(partner_id, partner_key, url):
     """Wysyła zapytanie SOAP i pobiera etykietę w formacie Base64."""
     soap_body = generate_soap_body(partner_id, partner_key)
 
-    response = requests.post(SOAP_URL, data=soap_body, headers=HEADERS, verify=True)
+    response = requests.post(url, data=soap_body, headers=HEADERS, verify=True)
 
     if response.status_code != 200:
         # Funkcja wysyłająca zapytanie SOAP i pobierająca etykietę
@@ -147,81 +147,79 @@ def get_label(partner_id, partner_key):
     return label.text
 
 # Funkcja do otwierania strony i przesyłania pliku
-def open_epl_printer_website_and_upload_file(driver, file_path):
-    try:
+#def open_epl_printer_website_and_upload_file(driver, file_path):
+ #   try:
         # Otwórz nową kartę
-        driver.execute_script("window.open('');")
-        driver.switch_to.window(driver.window_handles[-1])  # Przełącz się na nową kartę
+   #     driver.execute_script("window.open('');")
+    #    driver.switch_to.window(driver.window_handles[-1])  # Przełącz się na nową kartę
 
         # Przejdź do strony EPL Printer
-        driver.get("https://eplprinter.azurewebsites.net/")
-        print("Strona EPL Printer została otwarta w nowej karcie.")
+     #   driver.get("https://eplprinter.azurewebsites.net/")
+      #  print("Strona EPL Printer została otwarta w nowej karcie.")
 
         # Zaznaczenie checkboxa zapewniającego polskie znaki
-        checkbox = driver.find_element(By.ID, "chkUTF8")
-        checkbox.click()
+  #      checkbox = driver.find_element(By.ID, "chkUTF8")
+   #     checkbox.click()
 
-        # Sprawdzenie, czy checkbox jest zaznaczony
-        assert checkbox.is_selected(), "Checkbox nie został zaznaczony!"
+    #    # Sprawdzenie, czy checkbox jest zaznaczony
+     #   assert checkbox.is_selected(), "Checkbox nie został zaznaczony!"
 
         # Wczytanie zawartości pliku EPL
-        with open(file_path, "r", encoding="utf-8") as file:
-            epl_data = file.read()
+      #  with open(file_path, "r", encoding="utf-8") as file:
+       #     epl_data = file.read()
 
         # Poczekaj, aż pole tekstowe będzie widoczne
-        wait = WebDriverWait(driver, 10)
-        text_area = wait.until(EC.presence_of_element_located((By.ID, "eplCommands")))
+        #wait = WebDriverWait(driver, 10)
+        #text_area = wait.until(EC.presence_of_element_located((By.ID, "eplCommands")))
 
         # Wklejenie danych do pola tekstowego
-        text_area.clear()
-        text_area.send_keys(epl_data)
-        print("Dane EPL zostały wklejone.")
+        #text_area.clear()
+        #text_area.send_keys(epl_data)
+        #print("Dane EPL zostały wklejone.")
 
         # Znalezienie przycisku "Print EPL" i kliknięcie
-        submit_button = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "btn-danger")))
-        driver.execute_script("arguments[0].scrollIntoView();", submit_button)
-        time.sleep(1)  # Czekamy chwilę po przewinięciu
-        driver.execute_script("arguments[0].click();", submit_button)
-        print("Przycisk 'Print EPL' został kliknięty.")
+        #submit_button = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "btn-danger")))
+        #driver.execute_script("arguments[0].scrollIntoView();", submit_button)
+       # time.sleep(1)  # Czekamy chwilę po przewinięciu
+      #  driver.execute_script("arguments[0].click();", submit_button)
+     #   print("Przycisk 'Print EPL' został kliknięty.")
 
-    except Exception as e:
-        print(f"Błąd: {e}")
+    #except Exception as e:
+       # print(f"Błąd: {e}")
 
 # Główna część programu
 if __name__ == "__main__":
-    # Ścieżka do folderu głównego
-    main_folder = r"C:\Users\bgromadka\Desktop\generowanie etykiet- dokumentacja\Etykiety"
 
     # Nazwa folderu metody (np. nazwa skryptu lub funkcji)
-    method_folder_name = "label_GenerateStandardCustomerReturn_EPL"
+    method_folder_name = "GenerateStandardCustomerReturn_EPL"
 
     # Lista partnerów (PartnerID, PartnerKey)
     partners = [
         ("PWRTR50301", "PWRTR50301"),
 
-        ("TEST000129", "TTFWWSCSVO"),
+
     ]
 
     print("Pobieranie etykiet...")
 
     try:
         # Inicjalizacja przeglądarki Chrome
-        chrome_options = Options()
-        chrome_options.add_argument("--start-maximized")
-        chrome_options.add_experimental_option("detach", True)
-        service = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service, options=chrome_options)
+       # chrome_options = Options()
+        #chrome_options.add_argument("--start-maximized")
+        #chrome_options.add_experimental_option("detach", True)
+        #service = Service(ChromeDriverManager().install())
+        #driver = webdriver.Chrome(service=service, options=chrome_options)
 
-        for partner_id, partner_key in partners:
-            print(f"Generowanie etykiety dla {partner_id}...")
-            label_base64 = get_label(partner_id, partner_key)
-            output_filename = PARTNER_FILE_NAMES[partner_id]
-            decode_and_save_EPL(label_base64, main_folder, method_folder_name, output_filename)
-
+        for url_name, url_value in URL_DICT.items():
+            for partner_id, partner_key in partners:
+                print(f"Generowanie etykiety dla {partner_id}...")
+                label_base64 = get_label(partner_id, partner_key, url_value)
+                decode_and_save_EPL(label_base64, OUTPUT_FOLDER, method_folder_name, PARTNER_FILE_NAMES[partner_id],
+                                    url_name)
             # Otwórz stronę EPL Printer i prześlij plik w nowej karcie
-            file_path = os.path.join(main_folder, "wygenerowane etykiety", method_folder_name, f"{output_filename}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.epl")
-            open_epl_printer_website_and_upload_file(driver, file_path)
+           # file_path = os.path.join(main_folder, "wygenerowane etykiety", method_folder_name, f"{output_filename}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.epl")
+            #open_epl_printer_website_and_upload_file(driver, file_path)
 
-        print("Wszystkie etykiety zostały przetworzone. Przeglądarka pozostaje otwarta.")
+        #print("Wszystkie etykiety zostały przetworzone. Przeglądarka pozostaje otwarta.")
     except Exception as e:
         print(f"Wystąpił błąd: {e}")

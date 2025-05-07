@@ -1,22 +1,20 @@
+from lxml import etree
+
 import requests
 import base64
 import os
 import xml.etree.ElementTree as ET
-import webbrowser
 import datetime
-import threading
-
-# Konfiguracja
-SOAP_URL = "http://bruchorpact03/WebServicePwRKube/WebServicePwR.asmx"
-HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
+from common_data import URL_DICT, OUTPUT_FOLDER
 
 # Mapowanie partnerów na nazwy plików
 PARTNER_FILE_NAMES = {
-    "PWR0000006": "label_standard_GenerateLabelBusinessPackList.pdf",
-    "TEST000859": "label_meest_GenerateLabelBusinessPackList.pdf",
-    "TEST003483": "label_Vinted_GenerateLabelBusinessPackList.pdf",
-    "TEST002922": "label_Marec_GenerateLabelBusinessPackList.pdf"
+    "PWR0000006": "LabelPrintDuplicate_standard_PDF.pdf",
+    "TEST000859": "LabelPrintDuplicate_meest_PDf.pdf",
+    "TEST003483": "LabelPrintDuplicate_Vinted_PDF.pdf",
+
 }
+HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
 
 
 # Funkcja generująca XML dla GenerateLabelBusinessPack
@@ -26,8 +24,7 @@ def generate_label_business_pack_body(partner_id, partner_key):
                xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
                xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
-  
-       <GenerateLabelBusinessPack xmlns="https://91.242.220.103/WebServicePwR">
+    <GenerateLabelBusinessPack xmlns="https://91.242.220.103/WebServicePwR">
       <PartnerID>{partner_id}</PartnerID>
       <PartnerKey>{partner_key}</PartnerKey>
       <BoxSize>L</BoxSize>
@@ -62,7 +59,7 @@ def generate_label_business_pack_body(partner_id, partner_key):
 
       <CashOnDelivery>F</CashOnDelivery>--T-F
       <AmountCashOnDelivery>1234</AmountCashOnDelivery>--kwota
-	        <TransferDescription>opis transakcji</TransferDescription>
+          <TransferDescription>opis transakcji</TransferDescription>
 ----------------------------------------------------------dodatkowe serwisy
 
 
@@ -102,10 +99,10 @@ def generate_soap_body(partner_id, partner_key, pack_code):
 
 # Funkcja do pobrania PackCode z GenerateLabelBusinessPack
 # Zmodyfikowana funkcja do pobrania PackCode
-def get_pack_code(partner_id, partner_key):
+def get_pack_code(partner_id, partner_key, url):
     """Pobiera PackCode_RUCH z odpowiedzi GenerateLabelBusinessPack"""
     soap_body = generate_label_business_pack_body(partner_id, partner_key)
-    response = requests.post(SOAP_URL, data=soap_body, headers=HEADERS, verify=True)
+    response = requests.post(url, data=soap_body, headers=HEADERS, verify=True)
 
     if response.status_code != 200:
         print(f"Treść odpowiedzi: {response.text}")
@@ -150,12 +147,14 @@ def get_pack_code(partner_id, partner_key):
         print("Odpowiedź serwera:")
         print(response.text)
         raise Exception("Nie można sparsować odpowiedzi XML")
+
+
 # Funkcja get_label
-def get_label(partner_id, partner_key):
+def get_label(partner_id, partner_key, url):
     """Wysyła zapytanie SOAP i pobiera etykietę w formacie Base64."""
     try:
         # 1. Pobierz PackCode
-        pack_code = get_pack_code(partner_id, partner_key)
+        pack_code = get_pack_code(partner_id, partner_key, url)
         print(f"Pobrano PackCode: {pack_code}")
 
         # 2. Wygeneruj żądanie LabelPrintDuplicate
@@ -165,7 +164,7 @@ def get_label(partner_id, partner_key):
         print("\nŻądanie SOAP do LabelPrintDuplicate:")
         print(soap_body)
 
-        response = requests.post(SOAP_URL, data=soap_body, headers=HEADERS, verify=True)
+        response = requests.post(url, data=soap_body, headers=HEADERS, verify=True)
 
         # Debug: Wyświetl odpowiedź
         print("\nOdpowiedź z LabelPrintDuplicate:")
@@ -174,47 +173,46 @@ def get_label(partner_id, partner_key):
         if response.status_code != 200:
             raise Exception(f"Błąd HTTP: {response.status_code}")
 
-        # 3. Uproszczone parsowanie odpowiedzi
-        root = ET.fromstring(response.text)
-
-        # Usuwamy skomplikowane przestrzenie nazw i predykaty
-        # Przeszukujemy całe drzewo XML w poszukiwaniu LabelData
-        for elem in root.iter():
-            if 'LabelData' in elem.tag:
-                if elem.text and elem.text.strip():
-                    return elem.text
-
-        # Alternatywnie: próba znalezienia po prostu tekstu base64
-        import re
-        base64_pattern = r'([A-Za-z0-9+/]{30,}={0,2})'
-        matches = re.findall(base64_pattern, response.text)
-        if matches:
-            return max(matches, key=len)  # Zwróć najdłuższy ciąg Base64
-
-        print("\nNie znaleziono LabelData. Dostępne elementy w odpowiedzi:")
-        for elem in root.iter():
-            print(f"Element: {elem.tag}, Wartość: {elem.text}")
-        raise Exception("LabelData nie znaleziony w odpowiedzi")
+        xml_response = etree.fromstring(response.text.encode('utf-8'))
+        get_element = xml_response.find(f'.//Label', {None: 'https://91.242.220.103/WebServicePwR'})
+        return get_element.text if get_element is not None else None
 
     except Exception as e:
         print(f"\nBłąd w get_label: {str(e)}")
         raise
 
+
 # Funkcja dekodująca Base64 i zapisująca PDF
-def decode_and_save_pdf(base64_data, folder_path, output_filename):
+def decode_and_save_pdf(base64_data, main_folder, method_folder_name, output_filename, url_name):
     """Dekoduje dane Base64 i zapisuje je jako plik PDF."""
     try:
-        os.makedirs(folder_path, exist_ok=True)
-        print(f"Folder docelowy: {folder_path}")
+        # Ścieżka do folderu "wygenerowane etykiety"
+        generated_folder = os.path.join(main_folder, "wygenerowane etykiety")
+        os.makedirs(generated_folder, exist_ok=True)
+        print(f"Folder 'wygenerowane etykiety' został utworzony: {generated_folder}")
 
+        # Ścieżka do folderu metody wewnątrz "wygenerowane etykiety"
+        method_folder = os.path.join(generated_folder, method_folder_name)
+        os.makedirs(method_folder, exist_ok=True)
+        print(f"Folder metody '{method_folder_name}' został utworzony: {method_folder}")
+
+        # Upewniamy się, że folder istnieje
+        os.makedirs(method_folder, exist_ok=True)
+        print(f"Folder docelowy: {method_folder}")
+
+        # Pobranie aktualnej daty i godziny
         current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+        # Tworzenie nowej nazwy pliku z datą i godziną
         filename, file_extension = os.path.splitext(output_filename)
-        new_output_filename = f"{filename}_{current_time}{file_extension}"
+        new_output_filename = f"{filename}__{url_name}__{current_time}{file_extension}"
         print(f"Nowa nazwa pliku: {new_output_filename}")
 
-        output_path = os.path.join(folder_path, new_output_filename)
+        # Pełna ścieżka do pliku PDF
+        output_path = os.path.join(method_folder, new_output_filename)
         print(f"Pełna ścieżka do pliku: {output_path}")
 
+        # Dekodowanie Base64 i zapis do pliku PDF
         pdf_data = base64.b64decode(base64_data)
         print(f"Długość danych PDF: {len(pdf_data)} bajtów")
 
@@ -222,46 +220,29 @@ def decode_and_save_pdf(base64_data, folder_path, output_filename):
             pdf_file.write(pdf_data)
             print(f"Plik PDF zapisany: {output_path}")
 
-        webbrowser.open(f'file://{os.path.abspath(output_path)}')
-        print(f"Etykieta zapisana: {output_path} i otwarta w przeglądarce.")
+        # Otwórz plik PDF w przeglądarce
+        # webbrowser.open(f'file://{os.path.abspath(output_path)}')
+        # print(f"Etykieta zapisana: {output_path} i otwarta w przeglądarce.")
     except Exception as e:
         print(f"Błąd podczas zapisywania pliku PDF: {e}")
-
-
 if __name__ == "__main__":
-    # Ścieżka do folderu głównego
-    main_folder = r"C:\Users\bgromadka\Desktop\generowanie etykiet- dokumentacja\Etykiety"
 
-    # Ścieżka do folderu "wygenerowane etykiety"
-    generated_folder = os.path.join(main_folder, "wygenerowane etykiety")
-    os.makedirs(generated_folder, exist_ok=True)
-    print(f"Folder 'wygenerowane etykiety' został utworzony: {generated_folder}")
-
-    # Nazwa folderu metody
-    method_folder_name = "label_LabelPrintDuplicate"
-
-    # Ścieżka do folderu metody wewnątrz "wygenerowane etykiety"
-    method_folder = os.path.join(generated_folder, method_folder_name)
-    os.makedirs(method_folder, exist_ok=True)
-    print(f"Folder metody '{method_folder_name}' został utworzony: {method_folder}")
-
+    method_folder_name = "LabelPrintDuplicate_PDF"
     # Lista partnerów (PartnerID, PartnerKey)
     partners = [
         ("PWR0000006", "1234"),
         ("TEST000859", "SMS8IKIF3A"),
         ("TEST003483", "F2E087C0B9"),
-        ("TEST002922", "57FE54AF8E")
+
     ]
 
     try:
-        for partner_id, partner_key in partners:
-            print(f"\nPrzetwarzanie partnera {partner_id}...")
-            try:
-                label_base64 = get_label(partner_id, partner_key)
-                decode_and_save_pdf(label_base64, method_folder, PARTNER_FILE_NAMES[partner_id])
-            except Exception as e:
-                print(f"Błąd podczas przetwarzania partnera {partner_id}: {e}")
-                continue  # Kontynuuj z następnym partnerem w przypadku błędu
-
+        for url_name, url_value in URL_DICT.items():
+            for partner_id, partner_key in partners:
+                print(f"Generowanie etykiety dla {partner_id}...")
+                label_base64 = get_label(partner_id, partner_key, url_value)
+                # Zapisanie etykiety w folderze z nazwą metody
+                decode_and_save_pdf(label_base64, OUTPUT_FOLDER, method_folder_name, PARTNER_FILE_NAMES[partner_id],
+                                    url_name)
     except Exception as e:
-        print(f"Wystąpił ogólny błąd: {e}")
+        print(f"Wystąpił błąd: {e}")

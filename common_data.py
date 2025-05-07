@@ -7,7 +7,7 @@ URL_DICT = {
     "kub-api-url": "http://bruchorpact03/WebServicePwRKube/WebServicePwR.asmx",
 }
 
-OUTPUT_FOLDER = r"C:\Users\kdabek\Desktop\generowanie etykiet- dokumentacja\Etykiety"
+OUTPUT_FOLDER = r"C:\Users\bgromadka\Desktop\projekty\etykiety"
 
 
 SCRIPT_LIST = [
@@ -28,6 +28,24 @@ SCRIPT_LIST = [
     "GenerateOrlenPaczkaLabel_PDF.py", # ToDo wywala się przy próbie pobrania allegro!
     "GenerateOrlenPaczkaLabel_PDF.py"
     "GenerateOrlenPaczkaLabel_ZPL.py",
+    "GenerateOrlenPaczkaReturn2home_EPL.py"
+    "GenerateOrlenPaczkaReturn2home_PDF.py" #brak etykiety dla kub
+    "GenerateOrlenPaczkaReturn2home_PDF10.py" #brak etykiety dla kub
+    "GenerateOrlenPaczkaReturn2home_ZPL.py" #brak etykiety dla kub
+    "GenerateStandardCustomerReturn_PDF.py"
+    "GenerateStandardCustomerReturn_PDF10.py"
+    "GenerateStandardCustomerReturn_ZPL.py" #nie zwraca zakodowanej etykiety
+    "GenerateStnadardCustomerReturn_EPL.py" #brak etykiety dla kub
+    "LabelPrintDuplicate.py"
+    "LabelPrintDuplicateList.py"
+    "LabelPrintDuplicateListTwo_EPL.py"
+    "LabelPrintDuplicateListTwo_PDF.py"
+    "LabelPrintDuplicateListTwo_PDF10.py"
+    "LabelPrintDuplicateListTwo_ZPL.py"
+    "LabelPrintDuplicateTwo_EPL.py"
+    "LabelPrintDuplicateTwo_PDF.py"
+    "LabelPrintDuplicateTwo_PDF10.py"
+    "LabelPrintDuplicateTwo_ZPL.py"
 ]
 
 

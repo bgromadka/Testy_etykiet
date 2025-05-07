@@ -14,15 +14,15 @@ import time
 import datetime
 
 # Konfiguracja
-SOAP_URL = "http://bruchorpact03/WebServicePwRKube/WebServicePwR.asmx"
+from common_data import OUTPUT_FOLDER, URL_DICT
 HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
 
 # Mapowanie partnerów na nazwy plików
 PARTNER_FILE_NAMES = {
-    "PWR0000006": "label_standard_LabelPrintDuplicateListTwo.epl",
-    "TEST000859": "label_meest_LabelPrintDuplicateListTwo.epl",
-    "TEST003483": "label_Vinted_LabelPrintDuplicateListTwo.epl",
-    "TEST002922": "label_Marec_LabelPrintDuplicateListTwo.epl"
+    "PWR0000006": "LabelPrintDuplicateListTwo_standard_EPL.pdf",
+    "TEST000859": "LabelPrintDuplicateListTwo_meest_EPL.pdf",
+    "TEST003483": "LabelPrintDuplicateListTwo_Vinted_EPL.pdf",
+
 }
 
 
@@ -91,10 +91,10 @@ def generate_soap_body(partner_id, partner_key, pack_codes):
 </soap:Envelope>"""
 
 
-def get_single_pack_code(partner_id, partner_key):
+def get_single_pack_code(partner_id, partner_key, url):
     """Wywołuje GenerateLabelBusinessPack i zwraca PackCode_RUCH"""
     soap_body = generate_label_business_pack_body(partner_id, partner_key)
-    response = requests.post(SOAP_URL, data=soap_body, headers=HEADERS, verify=True)
+    response = requests.post(url, data=soap_body, headers=HEADERS, verify=True)
 
     if response.status_code != 200:
         print(f"Treść odpowiedzi: {response.text}")
@@ -114,11 +114,11 @@ def get_single_pack_code(partner_id, partner_key):
     raise Exception("PackCode_RUCH nie znaleziony w odpowiedzi")
 
 
-def get_label(partner_id, partner_key):
+def get_label(partner_id, partner_key, url):
     """Wysyła zapytanie SOAP i pobiera etykietę w formacie Base64."""
     try:
         # 1. Pobierz trzy kody paczek
-        pack_codes = [get_single_pack_code(partner_id, partner_key) for _ in range(3)]
+        pack_codes = [get_single_pack_code(partner_id, partner_key, url) for _ in range(3)]
         print(f"Użyte kody paczek: {pack_codes}")
 
         # 2. Generuj żądanie
@@ -128,7 +128,7 @@ def get_label(partner_id, partner_key):
         print("\nŻądanie SOAP do LabelPrintDuplicateListTwo:")
         print(soap_body)
 
-        response = requests.post(SOAP_URL, data=soap_body, headers=HEADERS, verify=True)
+        response = requests.post(url, data=soap_body, headers=HEADERS, verify=True)
 
         # Debug: Wyświetl odpowiedź
         print("\nOdpowiedź z LabelPrintDuplicateListTwo:")
@@ -174,103 +174,90 @@ def get_label(partner_id, partner_key):
         raise
 
 
-def decode_and_save_EPL(base64_data, main_folder, method_folder_name, output_filename):
-    """Dekoduje i zapisuje plik EPL"""
+def decode_and_save_EPL(base64_data, main_folder, method_folder_name, output_filename, url_name):
+    """Dekoduje dane Base64 i zapisuje je jako plik PDF."""
     try:
-        # Przygotuj ścieżki
+        # Ścieżka do folderu "wygenerowane etykiety"
         generated_folder = os.path.join(main_folder, "wygenerowane etykiety")
+        os.makedirs(generated_folder, exist_ok=True)
+        print(f"Folder 'wygenerowane etykiety' został utworzony: {generated_folder}")
+
+        # Ścieżka do folderu metody wewnątrz "wygenerowane etykiety"
         method_folder = os.path.join(generated_folder, method_folder_name)
         os.makedirs(method_folder, exist_ok=True)
+        print(f"Folder metody '{method_folder_name}' został utworzony: {method_folder}")
+        os.makedirs(method_folder, exist_ok=True)
+        print(f"Folder docelowy: {method_folder}")
+        # Pobranie aktualnej daty i godziny
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-        # Utwórz nazwę pliku z timestampem
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        output_path = os.path.join(method_folder, f"{os.path.splitext(output_filename)[0]}_{timestamp}.epl")
+        # Tworzenie nowej nazwy pliku z datą i godziną
+        filename, file_extension = os.path.splitext(output_filename)
+        new_output_filename = f"{filename}__{url_name}__{current_time}{file_extension}"
+        print(f"Nowa nazwa pliku: {new_output_filename}")
+        output_path = os.path.join(method_folder, new_output_filename)
+        print(f"Pełna ścieżka do pliku: {output_path}")
+        print(f"Plik PDF zapisany: {output_path}")
 
-        # Zapisz plik
-        with open(output_path, "wb") as f:
-            f.write(base64.b64decode(base64_data))
+        pdf_data = base64.b64decode(base64_data)
+        print(f"Długość danych PDF: {len(pdf_data)} bajtów")
+        with open(output_path, "wb") as pdf_file:
+            pdf_file.write(pdf_data)
+            print(f"Plik PDF zapisany: {output_path}")
 
-        # Otwórz w Notepad++
-        if os.path.exists(r"C:\Program Files\Notepad++\notepad++.exe"):
-            subprocess.Popen([r"C:\Program Files\Notepad++\notepad++.exe", output_path])
-
-        return output_path
+        #webbrowser.open(f'file://{os.path.abspath(output_path)}')
+        #print(f"Etykieta zapisana: {output_path} i otwarta w przeglądarce.")
     except Exception as e:
-        print(f"Błąd zapisu EPL: {e}")
-        raise
+        print(f"Błąd podczas zapisywania pliku PDF: {e}")
 
 
-def open_epl_printer_website(driver, file_path):
-    """Otwiera stronę eplprinter i ładuje plik"""
-    try:
-        driver.execute_script("window.open('');")
-        driver.switch_to.window(driver.window_handles[-1])
-        driver.get("https://eplprinter.azurewebsites.net/")
+
+#def open_epl_printer_website(driver, file_path):
+ #   """Otwiera stronę eplprinter i ładuje plik"""
+  #  try:
+   #     driver.execute_script("window.open('');")
+    #    driver.switch_to.window(driver.window_handles[-1])
+     #   driver.get("https://eplprinter.azurewebsites.net/")
 
         # Zaznacz UTF-8
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.ID, "chkUTF8"))).click()
+      #  WebDriverWait(driver, 10).until(
+       #     EC.presence_of_element_located((By.ID, "chkUTF8"))).click()
 
         # Wczytaj zawartość pliku
-        with open(file_path, "r") as f:
-            content = f.read()
+        #with open(file_path, "r") as f:
+         #   content = f.read()
 
         # Wklej do formularza
-        textarea = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.ID, "eplCommands")))
-        textarea.clear()
-        textarea.send_keys(content)
+        #textarea = WebDriverWait(driver, 10).until(
+         #   EC.presence_of_element_located((By.ID, "eplCommands")))
+        #textarea.clear()
+        #textarea.send_keys(content)
 
         # Kliknij przycisk
-        WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CLASS_NAME, "btn-danger"))).click()
+        #WebDriverWait(driver, 10).until(
+         #   EC.element_to_be_clickable((By.CLASS_NAME, "btn-danger"))).click()
 
-    except Exception as e:
-        print(f"Błąd przeglądarki: {e}")
+    #except Exception as e:
+     #   print(f"Błąd przeglądarki: {e}")
 
 
 if __name__ == "__main__":
-    # Konfiguracja
-    main_folder = r"C:\Users\bgromadka\Desktop\generowanie etykiet- dokumentacja\Etykiety"
-    method_name = "label_LabelPrintDuplicateListTwo_EPL"
+
+    method_folder_name = "LabelPrintDuplicateListTwo_EPL"
     partners = [
         ("PWR0000006", "1234"),
         ("TEST000859", "SMS8IKIF3A"),
         ("TEST003483", "F2E087C0B9"),
-        ("TEST002922", "57FE54AF8E")
+
     ]
 
     try:
-        # Inicjalizacja przeglądarki
-        chrome_options = Options()
-        chrome_options.add_argument("--start-maximized")
-        chrome_options.add_experimental_option("detach", True)
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),
-                                  options=chrome_options)
-
-        # Przetwarzanie partnerów
-        for partner_id, partner_key in partners:
-            print(f"Przetwarzanie {partner_id}...")
-            try:
-                # Pobierz i zapisz etykietę
-                label = get_label(partner_id, partner_key)
-                file_path = decode_and_save_EPL(
-                    label,
-                    main_folder,
-                    method_name,
-                    PARTNER_FILE_NAMES[partner_id]
-                )
-
-                # Otwórz w przeglądarce
-                open_epl_printer_website(driver, file_path)
-
-            except Exception as e:
-                print(f"Błąd przetwarzania {partner_id}: {e}")
-                continue
-
-        print("Zakończono przetwarzanie")
+        for url_name, url_value in URL_DICT.items():
+            for partner_id, partner_key in partners:
+                print(f"Generowanie etykiety dla {partner_id}...")
+                label_base64 = get_label(partner_id, partner_key, url_value)
+            # output_filename = PARTNER_FILE_NAMES[partner_id]
+                decode_and_save_EPL(label_base64, OUTPUT_FOLDER, method_folder_name, PARTNER_FILE_NAMES[partner_id],
+                                    url_name)
     except Exception as e:
-        print(f"Błąd główny: {e}")
-    finally:
-        # Przeglądarka pozostanie otwarta
-        pass
+        print(f"Wystąpił błąd: {e}")

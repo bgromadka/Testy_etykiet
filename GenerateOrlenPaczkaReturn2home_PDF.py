@@ -6,9 +6,13 @@ import webbrowser
 import datetime
 
 # Konfiguracja
-SOAP_URL = "http://bruchorpact03/WebServicePwRKube/WebServicePwR.asmx"
+from common_data import URL_DICT, OUTPUT_FOLDER
 HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
+PARTNER_FILE_NAMES = {
 
+    "TEST000129": "GenerateOrlenPaczkaReturn2Home_Packeta_PDF.pdf",
+
+}
 # Funkcja generująca XML dla danego PartnerID i PartnerKey
 def generate_soap_body(partner_id, partner_key):
     return f"""<?xml version="1.0" encoding="utf-8"?>
@@ -70,11 +74,11 @@ def generate_soap_body(partner_id, partner_key):
 </soap:Envelope>"""
 
 # Funkcja wysyłająca zapytanie SOAP i pobierająca etykietę
-def get_label(partner_id, partner_key):
+def get_label(partner_id, partner_key, url):
     """Wysyła zapytanie SOAP i pobiera etykietę w formacie Base64."""
     soap_body = generate_soap_body(partner_id, partner_key)
 
-    response = requests.post(SOAP_URL, data=soap_body, headers=HEADERS, verify=True)
+    response = requests.post(url, data=soap_body, headers=HEADERS, verify=True)
 
     if response.status_code != 200:
         print(f"Treść odpowiedzi: {response.text}")
@@ -103,7 +107,7 @@ def get_label(partner_id, partner_key):
     return label_data.text
 
 # Funkcja dekodująca Base64 i zapisująca PDF w określonym folderze
-def decode_and_save_pdf(base64_data, main_folder, method_folder_name, output_filename):
+def decode_and_save_pdf(base64_data, main_folder, method_folder_name, output_filename, url_name):
     """Dekoduje dane Base64 i zapisuje je jako plik PDF w określonym folderze z datą i godziną w nazwie pliku."""
     try:
         # Ścieżka do folderu "wygenerowane etykiety"
@@ -125,7 +129,7 @@ def decode_and_save_pdf(base64_data, main_folder, method_folder_name, output_fil
 
         # Tworzenie nowej nazwy pliku z datą i godziną
         filename, file_extension = os.path.splitext(output_filename)
-        new_output_filename = f"{filename}_{current_time}{file_extension}"
+        new_output_filename = f"{filename}__{url_name}__{current_time}{file_extension}"
         print(f"Nowa nazwa pliku: {new_output_filename}")
 
         # Pełna ścieżka do pliku PDF
@@ -138,17 +142,15 @@ def decode_and_save_pdf(base64_data, main_folder, method_folder_name, output_fil
             print(f"Plik PDF zapisany: {output_path}")
 
         # Otwórz plik PDF w przeglądarce
-        webbrowser.open(f'file://{os.path.abspath(output_path)}')
-        print(f"Etykieta zapisana: {output_path} i otwarta w przeglądarce.")
+        # webbrowser.open(f'file://{os.path.abspath(output_path)}')
+        # print(f"Etykieta zapisana: {output_path} i otwarta w przeglądarce.")
     except Exception as e:
         raise Exception(f"Błąd podczas zapisywania pliku PDF: {e}")
 
 if __name__ == "__main__":
-    # Ścieżka do folderu głównego
-    main_folder = r"C:\Users\bgromadka\Desktop\generowanie etykiet- dokumentacja\Etykiety"
 
     # Nazwa folderu metody (np. nazwa skryptu lub funkcji)
-    method_folder_name = "label_GenerateOrlenPaczkaReturn2home_PDF_PDF"
+    method_folder_name = "GenerateOrlenPaczkaReturn2home_PDF"
 
     # Lista partnerów (PartnerID, PartnerKey)
     partners = [
@@ -166,11 +168,11 @@ if __name__ == "__main__":
 
     try:
         # Generowanie etykiety dla każdego partnera
-        for partner_id, partner_key in partners:
-            print(f"Generowanie etykiety dla partnera {partner_id}...")
-            label_base64 = get_label(partner_id, partner_key)
-            output_filename = f"label_{partner_id}.pdf"
-            decode_and_save_pdf(label_base64, main_folder, method_folder_name, output_filename)
-
+        for url_name, url_value in URL_DICT.items():
+            for partner_id, partner_key in partners:
+                print(f"Generowanie etykiety dla partnera {partner_id}...")
+                label_base64 = get_label(partner_id, partner_key, url_value)
+                decode_and_save_pdf(label_base64, OUTPUT_FOLDER, method_folder_name, PARTNER_FILE_NAMES[partner_id],
+                                    url_name)
     except Exception as e:
         print(f"Wystąpił błąd: {e}")
