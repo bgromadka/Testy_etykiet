@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Testy-etykiet"
+version = "0.1.0"
+description = "Generator raportów z podglądem etykiet PDF, ZPL i EPL dla wszystkich metod api"
+
+requires-python = ">=3.13"
+
+dependencies = [
+    "python-docx>=0.8.11",
+    "PyMuPDF>=1.20.0",
+    "requests>=2.31.0",
+    "selenium>=4.0.0"
+]
+
