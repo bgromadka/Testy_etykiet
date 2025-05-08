@@ -139,7 +139,6 @@ if __name__ == "__main__":
 
         #("TEST000859", "SMS8IKIF3A"),
         #("TEST003483", "F2E087C0B9"),
-        #("TEST002922", "57FE54AF8E"),
         #("TEST000129", "TTFWWSCSVO"),
         #("TEST000015", "GTTFM5HEOP")
 

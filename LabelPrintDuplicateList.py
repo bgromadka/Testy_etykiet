@@ -15,7 +15,6 @@ PARTNER_FILE_NAMES = {
     "PWR0000006": "LabelPrintDuplicateList_standard_PDF.pdf",
     "TEST000859": "LabelPrintDuplicateList_meest_PDF.pdf",
     "TEST003483": "LabelPrintDuplicateList_Vinted_PDF.pdf",
-    "TEST002922": "LabelPrintDuplicateList_Marec_PDF.pdf"
 }
 
 
@@ -262,7 +261,6 @@ if __name__ == "__main__":
         ("PWR0000006", "1234"),
         ("TEST000859", "SMS8IKIF3A"),
         ("TEST003483", "F2E087C0B9"),
-        ("TEST002922", "57FE54AF8E")
     ]
 
     try:

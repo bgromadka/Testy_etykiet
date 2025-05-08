@@ -2,15 +2,6 @@ import requests
 import base64
 import os
 import xml.etree.ElementTree as ET
-import subprocess
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-import time
 import datetime
 from common_data import URL_DICT, OUTPUT_FOLDER
 # Konfiguracja
@@ -222,27 +213,15 @@ if __name__ == "__main__":
     print("Pobieranie etykiet...")
 
     try:
-        # Inicjalizacja przeglądarki Chrome
-        # chrome_options = Options()
-        # chrome_options.add_argument("--start-maximized")
-        # chrome_options.add_experimental_option("detach", True)
-        # service = Service(ChromeDriverManager().install())
-        # driver = webdriver.Chrome(service=service, options=chrome_options)
-        #
-        # for partner_id, partner_key in partners:
-        #     print(f"Generowanie etykiety dla {partner_id}...")
-        #     label_base64 = get_label(partner_id, partner_key)
-        #     output_filename = PARTNER_FILE_NAMES[partner_id]  # Pobierz nazwę pliku dla danego partnera
-        #     new_output_filename = decode_and_save_zpl(label_base64, main_folder, method_folder_name, output_filename)
-        #
-        #     if new_output_filename:  # Sprawdź, czy plik został poprawnie zapisany
-        #         # Otwórz stronę ZPL Printer i prześlij plik w nowej karcie
-        #         file_path = os.path.join(main_folder, "wygenerowane etykiety", method_folder_name, new_output_filename)
-        #         if os.path.exists(file_path):  # Sprawdź, czy plik istnieje
-        #             open_zpl_printer_website_and_upload_file(driver, file_path)
-        #         else:
-        #             print(f"Plik {file_path} nie istnieje.")
+        try:
+            for url_name, url_value in URL_DICT.items():
+                for partner_id, partner_key in partners:
+                    print(f"Generowanie etykiety dla partnera {partner_id}...")
+                    label_base64 = get_label(partner_id, partner_key, url_value)
+                    decode_and_save_zpl(label_base64, OUTPUT_FOLDER, method_folder_name, PARTNER_FILE_NAMES[partner_id],
+                                        url_name)
+        except Exception as e:
+            print(f"Wystąpił błąd: {e}")
 
-        print("Wszystkie etykiety zostały przetworzone. Przeglądarka pozostaje otwarta.")
     except Exception as e:
         print(f"Wystąpił błąd: {e}")

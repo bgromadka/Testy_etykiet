@@ -2,15 +2,7 @@ import requests
 import base64
 import os
 import xml.etree.ElementTree as ET
-import subprocess
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-import time
+
 import datetime
 
 # Konfiguracja
@@ -19,9 +11,9 @@ HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
 
 # Mapowanie partnerów na nazwy plików
 PARTNER_FILE_NAMES = {
-    "PWR0000006": "LabelPrintDuplicateListTwo_standard_EPL.pdf",
-    "TEST000859": "LabelPrintDuplicateListTwo_meest_EPL.pdf",
-    "TEST003483": "LabelPrintDuplicateListTwo_Vinted_EPL.pdf",
+    "PWR0000006": "LabelPrintDuplicateListTwo_standard_EPL.epl",
+    "TEST000859": "LabelPrintDuplicateListTwo_meest_EPL.epl",
+    "TEST003483": "LabelPrintDuplicateListTwo_Vinted_EPL.epl",
 
 }
 

@@ -1,3 +1,4 @@
+import os
 import subprocess
 
 
@@ -7,45 +8,47 @@ URL_DICT = {
     "kub-api-url": "http://bruchorpact03/WebServicePwRKube/WebServicePwR.asmx",
 }
 
-OUTPUT_FOLDER = r"C:\Users\bgromadka\Desktop\projekty\etykiety"
+script_directory = os.path.dirname(os.path.abspath(__file__))
+
+OUTPUT_FOLDER = os.path.join(script_directory, 'label_report_generator\input_labels_folder')
 
 
 SCRIPT_LIST = [
     "GenerateLabelBusinessPack.py",
     "GenerateLabelBusinessPackAllegro.py",
-    "GenerateLabelBusinessPackList_EPL.py", # ToDo lack of conversion from epl to png
+    "GenerateLabelBusinessPackList_EPL.py",
     "GenerateLabelBusinessPackList_PDF.py",
     "GenerateLabelBusinessPackList_PDF10.py",
-    # "GenerateLabelBusinessPackListAllegro_EPL.py", # ToDo lack of conversion from epl to png. An error occurred: Label data not found in SOAP response.
+    # "GenerateLabelBusinessPackListAllegro_EPL.py", # incorrect PartnerID or PartnerKey
     "GenerateLabelBusinessPackListAllegro_PDF.py",
-    "GenerateLabelBusinessPackListAllegro_PDF10.py"
-    "GenerateLabelBusinessPackListAllegro_ZPL.py", # Zamiast zpl zwraca pdf
-    "GenerateLabelBusinessPackListTwo_EPL.py", # ToDo lack of conversion from epl to png
+    "GenerateLabelBusinessPackListAllegro_PDF10.py",
+    "GenerateLabelBusinessPackListAllegro_ZPL.py", # pdf zamiast zpl
+    "GenerateLabelBusinessPackListTwo_EPL.py",
     "GenerateLabelBusinessPackListTwo_PDF.py",
     "GenerateLabelBusinessPackListTwo_PDF10.py",
     "GenerateLabelBusinessPackListTwo_ZPL.py",
     "GenerateLabelBusinessPackTwo.py",
-    "GenerateOrlenPaczkaLabel_PDF.py", # ToDo wywala się przy próbie pobrania allegro!
-    "GenerateOrlenPaczkaLabel_PDF.py"
+    "GenerateOrlenPaczkaLabel_PDF.py", # wywala się przy próbie pobrania allegro!
+    "GenerateOrlenPaczkaLabel_PDF10.py",
     "GenerateOrlenPaczkaLabel_ZPL.py",
-    "GenerateOrlenPaczkaReturn2home_EPL.py"
-    "GenerateOrlenPaczkaReturn2home_PDF.py" #brak etykiety dla kub
-    "GenerateOrlenPaczkaReturn2home_PDF10.py" #brak etykiety dla kub
-    "GenerateOrlenPaczkaReturn2home_ZPL.py" #brak etykiety dla kub
-    "GenerateStandardCustomerReturn_PDF.py"
-    "GenerateStandardCustomerReturn_PDF10.py"
-    "GenerateStandardCustomerReturn_ZPL.py" #nie zwraca zakodowanej etykiety
-    "GenerateStnadardCustomerReturn_EPL.py" #brak etykiety dla kub
-    "LabelPrintDuplicate.py"
-    "LabelPrintDuplicateList.py"
-    "LabelPrintDuplicateListTwo_EPL.py"
-    "LabelPrintDuplicateListTwo_PDF.py"
-    "LabelPrintDuplicateListTwo_PDF10.py"
-    "LabelPrintDuplicateListTwo_ZPL.py"
-    "LabelPrintDuplicateTwo_EPL.py"
-    "LabelPrintDuplicateTwo_PDF.py"
-    "LabelPrintDuplicateTwo_PDF10.py"
-    "LabelPrintDuplicateTwo_ZPL.py"
+    "GenerateOrlenPaczkaReturn2home_EPL.py",
+    "GenerateOrlenPaczkaReturn2home_PDF.py", #brak etykiety dla kub
+    "GenerateOrlenPaczkaReturn2home_PDF10.py", #brak etykiety dla kub
+    "GenerateOrlenPaczkaReturn2home_ZPL.py",
+    "GenerateStandardCustomerReturn_PDF.py",
+    "GenerateStandardCustomerReturn_PDF10.py",
+    "GenerateStandardCustomerReturn_ZPL.py", #brak etykiety dla kub
+    "GenerateStnadardCustomerReturn_EPL.py", #brak etykiety dla kub
+    "LabelPrintDuplicate.py", #brak etykiety dla kub
+    "LabelPrintDuplicateList.py",
+    "LabelPrintDuplicateListTwo_EPL.py",
+    "LabelPrintDuplicateListTwo_PDF.py",
+    "LabelPrintDuplicateListTwo_PDF10.py",
+    "LabelPrintDuplicateListTwo_ZPL.py",
+    "LabelPrintDuplicateTwo_EPL.py",
+    "LabelPrintDuplicateTwo_PDF.py",
+    "LabelPrintDuplicateTwo_PDF10.py",
+    "LabelPrintDuplicateTwo_ZPL.py",
 ]
 
 

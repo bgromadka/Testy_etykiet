@@ -2,7 +2,6 @@ import requests
 import base64
 import os
 import xml.etree.ElementTree as ET
-import webbrowser
 import datetime
 
 from common_data import URL_DICT, OUTPUT_FOLDER

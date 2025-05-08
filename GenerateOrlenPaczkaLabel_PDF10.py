@@ -182,7 +182,7 @@ def decode_and_save_pdf(base64_data, main_folder, method_folder_name, output_fil
 
 if __name__ == "__main__":
     # Nazwa folderu metody (np. nazwa skryptu lub funkcji)
-    method_folder_name = "GenerateOrlenPaczkaLabel_PDF10F"
+    method_folder_name = "GenerateOrlenPaczkaLabel_PDF10"
 
     # Lista partnerów (PartnerID, PartnerKey)
     partners = [
