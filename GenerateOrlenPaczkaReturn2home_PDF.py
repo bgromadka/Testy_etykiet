@@ -30,7 +30,7 @@ def generate_soap_body(partner_id, partner_key):
             <AlternativeDestinationCode></AlternativeDestinationCode>
 ----------------------------------------------------------Punkt odbioru
 ----------------------------------------------------------serwisy
-      <Format>PDF10</Format>
+      <Format>PDF</Format>
             <BoxSize>S</BoxSize>
             <Insurance></Insurance>
             <PackValue></PackValue>
