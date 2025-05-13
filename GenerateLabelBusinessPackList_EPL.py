@@ -94,7 +94,7 @@ def generate_soap_body(partner_id, partner_key):
   </soap:Body>
 </soap:Envelope>"""
 
-def decode_and_save_EPL(base64_data, main_folder, method_folder_name, output_filename, url_name):
+def decode_and_save_EPL(base64_data, pack_code, main_folder, method_folder_name, output_filename, url_name):
     """Dekoduje dane Base64 i zapisuje je jako plik EPL w określonym folderze z datą i godziną w nazwie pliku."""
     try:
         # Ścieżka do folderu "wygenerowane etykiety"
@@ -115,11 +115,11 @@ def decode_and_save_EPL(base64_data, main_folder, method_folder_name, output_fil
         EPL_data = base64.b64decode(base64_data)
 
         # Pobranie aktualnej daty i godziny
-        current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d")
 
         # Tworzenie nowej nazwy pliku z datą i godziną
         filename, file_extension = os.path.splitext(output_filename)
-        new_output_filename = f"{filename}__{url_name}__{current_time}{file_extension}"
+        new_output_filename = f"{filename}__{url_name}__{pack_code}__{current_time}{file_extension}"
         print(f"Nowa nazwa pliku: {new_output_filename}")
 
         # Pełna ścieżka do pliku EPL
@@ -167,8 +167,9 @@ def get_label(partner_id, partner_key,url):
     if label_data is None or not label_data.text:
         raise Exception("Nie znaleziono danych etykiety w odpowiedzi SOAP.")
 
-    # Zwracamy zakodowaną etykietę
-    return label_data.text
+    pack_codes = root.findall(".//PackCode_RUCH", namespaces=None)
+    result_pack_code = '_'.join(el.text for el in pack_codes)
+    return label_data.text, result_pack_code
 
 # Funkcja do otwierania strony i przesyłania pliku
 # def open_epl_printer_website_and_upload_file(driver, file_path):
@@ -236,9 +237,9 @@ if __name__ == "__main__":
         for url_name, url_value in URL_DICT.items():
             for partner_id, partner_key in partners:
                 print(f"Generowanie etykiety dla {partner_id}...")
-                label_base64 = get_label(partner_id, partner_key, url_value)
+                response_data = get_label(partner_id, partner_key, url_value)
                 # output_filename = PARTNER_FILE_NAMES[partner_id]
-                decode_and_save_EPL(label_base64, OUTPUT_FOLDER, method_folder_name, PARTNER_FILE_NAMES[partner_id], url_name)
+                decode_and_save_EPL(response_data[0], response_data[1], OUTPUT_FOLDER, method_folder_name, PARTNER_FILE_NAMES[partner_id], url_name)
 
                 # Otwórz stronę EPL Printer i prześlij plik w nowej karcie
                 # file_path = os.path.join(OUTPUT_FOLDER, "wygenerowane etykiety", method_folder_name, f"{output_filename}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.epl")
