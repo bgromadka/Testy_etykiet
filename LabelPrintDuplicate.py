@@ -5,7 +5,8 @@ import base64
 import os
 import xml.etree.ElementTree as ET
 import datetime
-from common_data import URL_DICT, OUTPUT_FOLDER
+from common_data import URL_DICT, OUTPUT_FOLDER, MISSING_LABEL_FILE
+import shutil
 
 # Mapowanie partnerów na nazwy plików
 PARTNER_FILE_NAMES = {
@@ -175,7 +176,7 @@ def get_label(partner_id, partner_key, url):
 
         xml_response = etree.fromstring(response.text.encode('utf-8'))
         get_element = xml_response.find(f'.//Label', {None: 'https://91.242.220.103/WebServicePwR'})
-        return get_element.text if get_element is not None else None
+        return get_element.text if get_element is not None else None, pack_code
 
     except Exception as e:
         print(f"\nBłąd w get_label: {str(e)}")
@@ -183,7 +184,7 @@ def get_label(partner_id, partner_key, url):
 
 
 # Funkcja dekodująca Base64 i zapisująca PDF
-def decode_and_save_pdf(base64_data, main_folder, method_folder_name, output_filename, url_name):
+def decode_and_save_pdf(base64_data, pack_code, main_folder, method_folder_name, output_filename, url_name):
     """Dekoduje dane Base64 i zapisuje je jako plik PDF."""
     try:
         # Ścieżka do folderu "wygenerowane etykiety"
@@ -201,11 +202,11 @@ def decode_and_save_pdf(base64_data, main_folder, method_folder_name, output_fil
         print(f"Folder docelowy: {method_folder}")
 
         # Pobranie aktualnej daty i godziny
-        current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d")
 
         # Tworzenie nowej nazwy pliku z datą i godziną
         filename, file_extension = os.path.splitext(output_filename)
-        new_output_filename = f"{filename}__{url_name}__{current_time}{file_extension}"
+        new_output_filename = f"{filename}__{url_name}__{pack_code}__{current_time}{file_extension}"
         print(f"Nowa nazwa pliku: {new_output_filename}")
 
         # Pełna ścieżka do pliku PDF
@@ -213,16 +214,17 @@ def decode_and_save_pdf(base64_data, main_folder, method_folder_name, output_fil
         print(f"Pełna ścieżka do pliku: {output_path}")
 
         # Dekodowanie Base64 i zapis do pliku PDF
-        pdf_data = base64.b64decode(base64_data)
-        print(f"Długość danych PDF: {len(pdf_data)} bajtów")
+        if base64_data is None:
+            shutil.copy(MISSING_LABEL_FILE, output_path)
 
-        with open(output_path, "wb") as pdf_file:
-            pdf_file.write(pdf_data)
-            print(f"Plik PDF zapisany: {output_path}")
+        else:
+            pdf_data = base64.b64decode(base64_data)
+            print(f"Długość danych PDF: {len(pdf_data)} bajtów")
 
-        # Otwórz plik PDF w przeglądarce
-        # webbrowser.open(f'file://{os.path.abspath(output_path)}')
-        # print(f"Etykieta zapisana: {output_path} i otwarta w przeglądarce.")
+            with open(output_path, "wb") as pdf_file:
+                pdf_file.write(pdf_data)
+                print(f"Plik PDF zapisany: {output_path}")
+
     except Exception as e:
         print(f"Błąd podczas zapisywania pliku PDF: {e}")
 if __name__ == "__main__":
@@ -240,9 +242,10 @@ if __name__ == "__main__":
         for url_name, url_value in URL_DICT.items():
             for partner_id, partner_key in partners:
                 print(f"Generowanie etykiety dla {partner_id}...")
-                label_base64 = get_label(partner_id, partner_key, url_value)
+                response_data = get_label(partner_id, partner_key, url_value)
+
                 # Zapisanie etykiety w folderze z nazwą metody
-                decode_and_save_pdf(label_base64, OUTPUT_FOLDER, method_folder_name, PARTNER_FILE_NAMES[partner_id],
+                decode_and_save_pdf(response_data[0], response_data[1], OUTPUT_FOLDER, method_folder_name, PARTNER_FILE_NAMES[partner_id],
                                     url_name)
     except Exception as e:
         print(f"Wystąpił błąd: {e}")

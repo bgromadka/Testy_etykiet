@@ -12,6 +12,7 @@ script_directory = os.path.dirname(os.path.abspath(__file__))
 
 OUTPUT_FOLDER = os.path.join(script_directory, 'label_report_generator\input_labels_folder')
 
+MISSING_LABEL_FILE = os.path.join(script_directory, 'missing_label.pdf')
 
 SCRIPT_LIST = [
     "GenerateLabelBusinessPack.py",
