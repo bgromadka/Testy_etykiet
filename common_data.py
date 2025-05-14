@@ -29,18 +29,18 @@ SCRIPT_LIST = [
     "GenerateLabelBusinessPackListTwo_PDF10.py",
     "GenerateLabelBusinessPackListTwo_ZPL.py",
     "GenerateLabelBusinessPackTwo.py",
-    "GenerateOrlenPaczkaLabel_PDF.py", # wywala się przy próbie pobrania allegro!
+    "GenerateOrlenPaczkaLabel_PDF.py",
     "GenerateOrlenPaczkaLabel_PDF10.py",
     "GenerateOrlenPaczkaLabel_ZPL.py",
     "GenerateOrlenPaczkaReturn2home_EPL.py",
-    "GenerateOrlenPaczkaReturn2home_PDF.py", #brak etykiety dla kub
-    "GenerateOrlenPaczkaReturn2home_PDF10.py", #brak etykiety dla kub
+    "GenerateOrlenPaczkaReturn2home_PDF.py",
+    "GenerateOrlenPaczkaReturn2home_PDF10.py",
     "GenerateOrlenPaczkaReturn2home_ZPL.py",
     "GenerateStandardCustomerReturn_PDF.py",
     "GenerateStandardCustomerReturn_PDF10.py",
-    "GenerateStandardCustomerReturn_ZPL.py", #brak etykiety dla kub
-    "GenerateStnadardCustomerReturn_EPL.py", #brak etykiety dla kub
-    "LabelPrintDuplicate.py", #brak etykiety dla kub
+    "GenerateStandardCustomerReturn_ZPL.py",
+    "GenerateStnadardCustomerReturn_EPL.py",
+    "LabelPrintDuplicate.py",
     "LabelPrintDuplicateList.py",
     "LabelPrintDuplicateListTwo_EPL.py",
     "LabelPrintDuplicateListTwo_PDF.py",

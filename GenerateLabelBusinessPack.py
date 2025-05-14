@@ -1,11 +1,12 @@
+import shutil
+
 import requests
 import base64
 import os
 import xml.etree.ElementTree as ET
-import webbrowser
 import datetime
 
-from common_data import URL_DICT, OUTPUT_FOLDER
+from common_data import URL_DICT, OUTPUT_FOLDER, MISSING_LABEL_FILE
 
 HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
 
@@ -101,24 +102,12 @@ def get_label(partner_id, partner_key, url):
 
     # Pobranie danych etykiety
     label_data = root.find(".//LabelData", namespaces=namespaces)
-
-    if label_data is None or not label_data.text:
-        print("Nie znaleziono danych etykiety w odpowiedzi SOAP.")
-        print("Pełna odpowiedź SOAP:")
-        print(response.text)
-        raise Exception("Nie znaleziono danych etykiety w odpowiedzi SOAP.")
-
     print(f"Znaleziono dane etykiety dla partnera {partner_id}.")
 
-    pack_code = root.find(".//PackCode_RUCH", namespaces=None)
+    pack_codes = root.findall(".//PackCode_RUCH", namespaces=None)
+    result_pack_code = '__'.join(el.text for el in pack_codes)
 
-    if label_data is None or not label_data.text:
-        print("Nie znaleziono pack code w odpowiedzi SOAP.")
-        print("Pełna odpowiedź SOAP:")
-        print(response.text)
-        raise Exception("Nie znaleziono pack code w odpowiedzi SOAP.")
-
-    return label_data.text, pack_code.text
+    return label_data.text if label_data is not None else None, result_pack_code
 
 
 # Funkcja dekodująca Base64 i zapisująca PDF w określonym folderze
@@ -130,7 +119,7 @@ def decode_and_save_pdf(base64_data, pack_code, folder_path, output_filename, ur
         print(f"Folder docelowy: {folder_path}")
 
         # Pobranie aktualnej daty i godziny
-        current_time = datetime.datetime.now().strftime("%Y-%m-%d")
+        current_time = datetime.datetime.now().strftime("%H-%M-%S")
 
         # Tworzenie nowej nazwy pliku z datą i godziną
         filename, file_extension = os.path.splitext(output_filename)
@@ -142,31 +131,27 @@ def decode_and_save_pdf(base64_data, pack_code, folder_path, output_filename, ur
         print(f"Pełna ścieżka do pliku: {output_path}")
 
         # Dekodowanie Base64 i zapis do pliku PDF
-        pdf_data = base64.b64decode(base64_data)
-        print(f"Długość danych PDF: {len(pdf_data)} bajtów")
+        if base64_data is None:
+            shutil.copy(MISSING_LABEL_FILE, output_path)
 
-        with open(output_path, "wb") as pdf_file:
-            pdf_file.write(pdf_data)
-            print(f"Plik PDF zapisany: {output_path}")
+        else:
+            pdf_data = base64.b64decode(base64_data)
+            print(f"Długość danych PDF: {len(pdf_data)} bajtów")
 
-        # # Otwórz plik PDF w przeglądarce
-        # webbrowser.open(f'file://{os.path.abspath(output_path)}')
-        # print(f"Etykieta zapisana: {output_path} i otwarta w przeglądarce.")
+            with open(output_path, "wb") as pdf_file:
+                pdf_file.write(pdf_data)
+                print(f"Plik PDF zapisany: {output_path}")
+
     except Exception as e:
         print(f"Błąd podczas zapisywania pliku PDF: {e}")
 
 
 if __name__ == "__main__":
-    # Ścieżka do folderu "wygenerowane etykiety"
-    generated_folder = os.path.join(OUTPUT_FOLDER, "wygenerowane etykiety")
-    os.makedirs(generated_folder, exist_ok=True)
-    print(f"Folder 'wygenerowane etykiety' został utworzony: {generated_folder}")
-
     # Nazwa folderu metody (np. nazwa skryptu lub funkcji)
     method_folder_name = "GenerateLabelBusinessPack"
 
     # Ścieżka do folderu metody wewnątrz "wygenerowane etykiety"
-    method_folder = os.path.join(generated_folder, method_folder_name)
+    method_folder = os.path.join(OUTPUT_FOLDER, method_folder_name)
     os.makedirs(method_folder, exist_ok=True)
     print(f"Folder metody '{method_folder_name}' został utworzony: {method_folder}")
 
@@ -182,9 +167,8 @@ if __name__ == "__main__":
             for partner_id, partner_key in partners:
                 print(f"Generowanie etykiety dla {partner_id}...")
                 response_data = get_label(partner_id, partner_key, url_value)
-
-                # Zapisanie etykiety w folderze metody wewnątrz "wygenerowane etykiety"
-                decode_and_save_pdf(response_data[0], response_data[1], method_folder, PARTNER_FILE_NAMES[partner_id], url_name)
+                decode_and_save_pdf(response_data[0], response_data[1], method_folder,
+                                    PARTNER_FILE_NAMES[partner_id], url_name)
 
     except Exception as e:
         print(f"Wystąpił błąd: {e}")
