@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 import datetime
 
 # Konfiguracja
-from common_data import URL_DICT, OUTPUT_FOLDER
+from common_data import OUTPUT_FOLDER, URL_DICT, MISSING_LABEL_FILE
 HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
 
 # Mapowanie partnerów na nazwy plików
@@ -180,34 +180,38 @@ def get_label(partner_id, partner_key, url):
 
         # 4. Parsowanie odpowiedzi
         root = ET.fromstring(response.text)
-        namespaces = {
-            'soap': 'http://schemas.xmlsoap.org/soap/envelope/',
-            '': 'https://91.242.220.103/WebServicePwR'
-        }
+        label_data = None
 
-        # Szukamy etykiety (może być Label lub LabelData w zależności od API)
-        label = root.find(".//Label", namespaces=namespaces) or root.find(".//LabelData", namespaces=namespaces)
+        # Szukamy LabelData w różnych możliwych lokalizacjach
+        for elem in root.iter():
+            if 'LabelData' in elem.tag and elem.text:
+                label_data = elem.text
+                break
 
-        if label is None or not label.text:
-            raise Exception("Nie znaleziono danych etykiety w odpowiedzi SOAP.")
+        if not label_data:
+            # Alternatywnie: próba znalezienia base64 w odpowiedzi
+            import re
+            base64_pattern = r'([A-Za-z0-9+/]{50,}={0,2})'
+            matches = re.findall(base64_pattern, response.text)
+            if matches:
+                label_data = max(matches, key=len)
 
-        return label.text
+        if not label_data:
+            raise Exception("Nie znaleziono danych etykiety w odpowiedzi")
+        result_pack_code = '__'.join(pack_codes)
+        return label_data if label_data is not None else None, result_pack_code
 
     except Exception as e:
         print(f"Błąd w get_label: {str(e)}")
         raise
 
 # Funkcja dekodująca Base64 i zapisująca ZPL
-def decode_and_save_zpl(base64_data, main_folder, method_folder_name, output_filename, url_name):
+def decode_and_save_zpl(base64_data, pack_code, main_folder, method_folder_name, output_filename, url_name):
     """Dekoduje dane Base64 i zapisuje je jako plik PDF."""
     try:
-        # Ścieżka do folderu "wygenerowane etykiety"
-        generated_folder = os.path.join(main_folder, "wygenerowane etykiety")
-        os.makedirs(generated_folder, exist_ok=True)
-        print(f"Folder 'wygenerowane etykiety' został utworzony: {generated_folder}")
 
         # Ścieżka do folderu metody wewnątrz "wygenerowane etykiety"
-        method_folder = os.path.join(generated_folder, method_folder_name)
+        method_folder = os.path.join(main_folder, method_folder_name)
         os.makedirs(method_folder, exist_ok=True)
         print(f"Folder metody '{method_folder_name}' został utworzony: {method_folder}")
         os.makedirs(method_folder, exist_ok=True)
@@ -217,7 +221,7 @@ def decode_and_save_zpl(base64_data, main_folder, method_folder_name, output_fil
 
         # Tworzenie nowej nazwy pliku z datą i godziną
         filename, file_extension = os.path.splitext(output_filename)
-        new_output_filename = f"{filename}__{url_name}__{current_time}{file_extension}"
+        new_output_filename = f"{filename}__{url_name}__{pack_code}__{current_time}{file_extension}"
         print(f"Nowa nazwa pliku: {new_output_filename}")
         output_path = os.path.join(method_folder, new_output_filename)
         print(f"Pełna ścieżka do pliku: {output_path}")
@@ -313,9 +317,10 @@ if __name__ == "__main__":
             for url_name, url_value in URL_DICT.items():
                 for partner_id, partner_key in partners:
                     print(f"Generowanie etykiety dla partnera {partner_id}...")
-                    label_base64 = get_label(partner_id, partner_key, url_value)
-                    decode_and_save_zpl(label_base64, OUTPUT_FOLDER, method_folder_name, PARTNER_FILE_NAMES[partner_id],
-                                        url_name)
+                    response_data = get_label(partner_id, partner_key, url_value)
+                    output_filename = PARTNER_FILE_NAMES[partner_id]
+                    decode_and_save_zpl(response_data[0], response_data[1], OUTPUT_FOLDER,
+                                          method_folder_name, output_filename, url_name)
 
     except Exception as e:
                     print(f"Wystąpił błąd: {e}")

@@ -42,14 +42,14 @@ SCRIPT_LIST = [
     "GenerateStnadardCustomerReturn_EPL.py",
     "LabelPrintDuplicate.py",
     "LabelPrintDuplicateList.py",
-    "LabelPrintDuplicateListTwo_EPL.py",
-    "LabelPrintDuplicateListTwo_PDF.py",
-    "LabelPrintDuplicateListTwo_PDF10.py",
-    "LabelPrintDuplicateListTwo_ZPL.py",
-    "LabelPrintDuplicateTwo_EPL.py",
-    "LabelPrintDuplicateTwo_PDF.py",
-    "LabelPrintDuplicateTwo_PDF10.py",
-    "LabelPrintDuplicateTwo_ZPL.py",
+    # "LabelPrintDuplicateListTwo_EPL.py",
+    # "LabelPrintDuplicateListTwo_PDF.py",
+    # "LabelPrintDuplicateListTwo_PDF10.py",
+    # "LabelPrintDuplicateListTwo_ZPL.py",
+    # "LabelPrintDuplicateTwo_EPL.py",
+    # "LabelPrintDuplicateTwo_PDF.py",
+    # "LabelPrintDuplicateTwo_PDF10.py",
+    # "LabelPrintDuplicateTwo_ZPL.py",
 ]
 
 

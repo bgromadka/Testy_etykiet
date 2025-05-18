@@ -3,9 +3,9 @@ import base64
 import os
 import xml.etree.ElementTree as ET
 import datetime
+import shutil
 
-
-from common_data import URL_DICT, OUTPUT_FOLDER
+from common_data import URL_DICT, OUTPUT_FOLDER, MISSING_LABEL_FILE
 # Konfiguracja
 
 HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
@@ -78,25 +78,22 @@ def get_label(partner_id, partner_key, url):
     }
 
     # Sprawdzanie, czy <Label> znajduje się w odpowiedzi
-    label = root.find(".//Label", namespaces=namespaces)
+    label_data = root.find(".//Label", namespaces=namespaces)
 
-    if label is None or not label.text:
-        raise Exception("Nie znaleziono danych etykiety w odpowiedzi SOAP.")
+    pack_codes = root.findall(".//PackCode_RUCH", namespaces=None)
+    result_pack_code = '__'.join(el.text for el in pack_codes)
 
-    # Zwracamy zakodowaną etykietę
-    return label.text
+    return label_data.text if label_data is not None else None, result_pack_code
 
 # Funkcja dekodująca Base64 i zapisująca ZPL
-def decode_and_save_zpl(base64_data, main_folder, method_folder_name, output_filename, url_name):
+def decode_and_save_zpl(base64_data, pack_code, main_folder, method_folder_name, output_filename, url_name):
     """Dekoduje dane Base64 i zapisuje je jako plik ZPL w określonym folderze z datą i godziną w nazwie pliku."""
     try:
         # Ścieżka do folderu "wygenerowane etykiety"
-        generated_folder = os.path.join(main_folder, "wygenerowane etykiety")
-        os.makedirs(generated_folder, exist_ok=True)
-        print(f"Folder 'wygenerowane etykiety' został utworzony: {generated_folder}")
+
 
         # Ścieżka do folderu metody wewnątrz "wygenerowane etykiety"
-        method_folder = os.path.join(generated_folder, method_folder_name)
+        method_folder = os.path.join(main_folder, method_folder_name)
         os.makedirs(method_folder, exist_ok=True)
         print(f"Folder metody '{method_folder_name}' został utworzony: {method_folder}")
 
@@ -105,10 +102,10 @@ def decode_and_save_zpl(base64_data, main_folder, method_folder_name, output_fil
         print(f"Folder docelowy: {method_folder}")
 
         # Dekodowanie Base64
-        ZPL_data = base64.b64decode(base64_data)
+
 
         # Pobranie aktualnej daty i godziny
-        current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d")
 
         # Tworzenie nowej nazwy pliku z datą i godziną
         filename, file_extension = os.path.splitext(output_filename)
@@ -120,8 +117,9 @@ def decode_and_save_zpl(base64_data, main_folder, method_folder_name, output_fil
         print(f"Pełna ścieżka do pliku: {output_path}")
 
         # Zapisz dane ZPL do pliku
-        with open(output_path, "wb") as ZPL_file:
-            ZPL_file.write(ZPL_data)
+        # Dekodowanie Base64
+        if base64_data is None:
+            shutil.copy(MISSING_LABEL_FILE, output_path)
         # Uruchomienie Notepad++ w tle
         #notepad_plus_plus_path = r"C:\Program Files\Notepad++\notepad++.exe"  # Ścieżka do Notepad++
         #if os.path.exists(notepad_plus_plus_path):
@@ -129,10 +127,13 @@ def decode_and_save_zpl(base64_data, main_folder, method_folder_name, output_fil
         #else:
          #   print("Nie znaleziono Notepad++ w domyślnej lokalizacji. Upewnij się, że jest zainstalowany.")
 
-        print(f"Etykieta została zapisana jako ZPL w folderze {method_folder}: {new_output_filename} i otwarta w Notepad++.")
+        else:
+            data = base64.b64decode(base64_data)
+            print(f"Długość danych pliku: {len(data)} bajtów")
 
-        # Zwróć nową nazwę pliku
-        return new_output_filename
+        with open(output_path, "wb") as file:
+            file.write(data)
+            print(f"Plik zapisany: {output_path}")
     except Exception as e:
         print(f"Błąd podczas zapisywania pliku ZPL: {e}")
         return None
@@ -190,8 +191,8 @@ if __name__ == "__main__":
         for url_name, url_value in URL_DICT.items():
             for partner_id, partner_key in partners:
                 print(f"Generowanie etykiety dla partnera {partner_id}...")
-                label_base64 = get_label(partner_id, partner_key, url_value)
-                decode_and_save_zpl(label_base64, OUTPUT_FOLDER, method_folder_name, PARTNER_FILE_NAMES[partner_id],
-                                    url_name)
+                response_data = get_label(partner_id, partner_key, url_value)
+                decode_and_save_zpl(response_data[0], response_data[1], OUTPUT_FOLDER,
+                                    method_folder_name, PARTNER_FILE_NAMES[partner_id], url_name)
     except Exception as e:
         print(f"Wystąpił błąd: {e}")

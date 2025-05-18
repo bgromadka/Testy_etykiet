@@ -187,13 +187,10 @@ def get_label(partner_id, partner_key, url):
 def decode_and_save_pdf(base64_data, pack_code, main_folder, method_folder_name, output_filename, url_name):
     """Dekoduje dane Base64 i zapisuje je jako plik PDF."""
     try:
-        # Ścieżka do folderu "wygenerowane etykiety"
-        generated_folder = os.path.join(main_folder, "wygenerowane etykiety")
-        os.makedirs(generated_folder, exist_ok=True)
-        print(f"Folder 'wygenerowane etykiety' został utworzony: {generated_folder}")
+
 
         # Ścieżka do folderu metody wewnątrz "wygenerowane etykiety"
-        method_folder = os.path.join(generated_folder, method_folder_name)
+        method_folder = os.path.join(main_folder, method_folder_name)
         os.makedirs(method_folder, exist_ok=True)
         print(f"Folder metody '{method_folder_name}' został utworzony: {method_folder}")
 
